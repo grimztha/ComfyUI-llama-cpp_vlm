@@ -17,8 +17,8 @@ An advanced, high-performance ComfyUI custom node suite for running Large Langua
 * **OCR & Specialized Handlers:** Native handlers for `DeepSeek-OCR`, `MinerU2.5-Pro`, `MiniCPM-v4.5 / v4.6`, `PaddleOCR-VL-1.5`, `Qwen3-ASR`, `Step3-VL`, `GLM-4.6V`, `LFM2.5-VL`, `Granite-Docling`, and more.
 
 ### ⚡ Speculative Decoding & Performance
-* **Draft Models & MTP Sidecars:** Accelerate generation using `speculative_mode` (`draft_dflash`, `draft_dspark`, `ngram_map_k`, `draft_exact`, or `auto`) with dedicated draft model selection (`DFlash`, `DFlash2`, `DSpark`, `MTP`).
-* **Smart Multimodal Speculative Guard:** Automatically bypasses speculative draft engines during vision/video requests (protecting against position gaps and negative token crashes) while keeping full speculation speed active for text requests.
+* **Draft Models & MTP Sidecars:** Accelerate generation using `speculative_mode` (`auto`, `NGRAM`, `DFlash`, `DFlash2`, `DSpark`, `MTP`, `Eagle3`) with dedicated draft model selection (`DFlash`, `DFlash2`, `DSpark`, `MTP`, `Eagle3`). In **`llama-cpp-python` 0.4.3+**, MTP natively supports MTMD multimodal image chat speculative decoding!
+* **Smart Multimodal Speculative Guard:** Automatically evaluates engine media capabilities (`supports_predecoded_media`)—allowing N-gram and MTP to accelerate multimodal inputs while safely bypassing text-only draft engines (such as DFlash / DSpark / Eagle3) to protect against KV cache mismatch.
 * **Flash Attention (`flash_attn`):** Reduces KV cache VRAM consumption by 50–70% on long context windows (16k–128k).
 * **Quantized KV Cache (`kv_cache_type`):** Supports `"f16"`, `"q8_0"`, and `"q4_0"` to save up to 75% VRAM on massive context workflows.
 
@@ -40,7 +40,7 @@ An advanced, high-performance ComfyUI custom node suite for running Large Langua
 
 ### 📋 Requirements
 > [!IMPORTANT]
-> Requires **`llama-cpp-python` v0.3.49 or newer** to function properly. Pre-built wheels with CUDA 13.0, CUDA 12.8, and Metal acceleration can be found at the [`JamePeng/llama-cpp-python`](https://github.com/JamePeng/llama-cpp-python) repository.
+> Requires **`llama-cpp-python` v0.3.49 or newer** (fully verified with **v0.4.3**). Pre-built wheels with CUDA 13.1, CUDA 13.0, CUDA 12.8, and Metal acceleration can be found at the [`JamePeng/llama-cpp-python`](https://github.com/JamePeng/llama-cpp-python) repository.
 
 ### 1. Clone the repository into ComfyUI custom nodes:
 ```bash

@@ -348,8 +348,8 @@ class TestComfyUILlamaCppVLM(unittest.TestCase):
         req_path = os.path.join(REPO_ROOT, "requirements.txt")
         with open(req_path, "r", encoding="utf-8") as f:
             content = f.read()
-        self.assertIn("0.4.1", content)
-        self.assertNotIn("0.3.49", content)
+        self.assertIn("0.4.3", content)
+        self.assertNotIn("0.4.1", content)
 
     def test_multimodal_bypasses_model_draft_speculative(self):
         inst = nodes.llama_cpp_instruct_adv()
@@ -543,9 +543,12 @@ class TestComfyUILlamaCppVLM(unittest.TestCase):
         self.assertIn("Eagle3", spec_modes)
 
     def test_multimodal_supports_predecoded_media(self):
-        """Verify that N-gram engines with supports_predecoded_media=True are not unnecessarily bypassed."""
-        inst = nodes.llama_cpp_instruct_adv()
+        """Verify that N-gram and MTP engines with supports_predecoded_media=True are not unnecessarily bypassed."""
         class MockNGramSpec:
+            supports_predecoded_media = True
+            def clear(self): pass
+
+        class MockMTPSpec:
             supports_predecoded_media = True
             def clear(self): pass
 
@@ -554,11 +557,13 @@ class TestComfyUILlamaCppVLM(unittest.TestCase):
             def clear(self): pass
 
         ngram = MockNGramSpec()
+        mtp = MockMTPSpec()
         draft = MockDraftSpec()
 
-        # Engine with supports_predecoded_media=True should not be bypassed
+        # Engines with supports_predecoded_media=True (NGRAM and 0.4.3+ MTP) should not be bypassed
         self.assertTrue(getattr(ngram, "supports_predecoded_media", False))
-        # Draft engine without supports_predecoded_media should be bypassed
+        self.assertTrue(getattr(mtp, "supports_predecoded_media", False))
+        # Text-only draft engines without supports_predecoded_media should be bypassed
         self.assertFalse(getattr(draft, "supports_predecoded_media", False))
 
     def test_video_path_input_registered(self):
