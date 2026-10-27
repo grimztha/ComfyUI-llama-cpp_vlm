@@ -239,11 +239,17 @@ class LLAMA_CPP_STORAGE:
             except Exception as e:
                 print(f"[llama-cpp_vlm] Warning closing llm: {e}")
 
-        if cls.chat_handler is not None and hasattr(cls.chat_handler, "_exit_stack"):
-            try:
-                cls.chat_handler._exit_stack.close()
-            except Exception as e:
-                print(f"[llama-cpp_vlm] Warning closing chat_handler: {e}")
+        if cls.chat_handler is not None:
+            if hasattr(cls.chat_handler, "close"):
+                try:
+                    cls.chat_handler.close()
+                except Exception as e:
+                    print(f"[llama-cpp_vlm] Warning closing chat_handler: {e}")
+            elif hasattr(cls.chat_handler, "_exit_stack"):
+                try:
+                    cls.chat_handler._exit_stack.close()
+                except Exception as e:
+                    print(f"[llama-cpp_vlm] Warning closing chat_handler: {e}")
 
         cls.llm = None
         cls.chat_handler = None
@@ -441,7 +447,7 @@ class LLAMA_CPP_STORAGE:
                 from llama_cpp.llama_speculative import SpecConfig, SpeculativeType
                 resolved_type = None
 
-                if speculative_mode in ("DFlash", "DFlash2"):
+                if speculative_mode in ("DFlash", "DFlash2", "LiliCorr"):
                     resolved_type = getattr(SpeculativeType, "DRAFT_DFLASH", None)
                 elif speculative_mode == "DSpark":
                     resolved_type = getattr(SpeculativeType, "DRAFT_DSPARK", None)
@@ -460,6 +466,8 @@ class LLAMA_CPP_STORAGE:
                             resolved_type = getattr(SpeculativeType, "DRAFT_MTP", SpeculativeType.DRAFT_DFLASH)
                         elif "eagle" in dm_lower:
                             resolved_type = getattr(SpeculativeType, "DRAFT_EAGLE3", SpeculativeType.DRAFT_DFLASH)
+                        elif "lilicorr" in dm_lower or "nemotron" in dm_lower:
+                            resolved_type = getattr(SpeculativeType, "DRAFT_DFLASH", SpeculativeType.DRAFT_DFLASH)
                         else:
                             resolved_type = getattr(SpeculativeType, "DRAFT_DFLASH", getattr(SpeculativeType, "DRAFT_MTP", SpeculativeType.NGRAM_MAP_K))
                     elif enable_mtp:
@@ -788,13 +796,13 @@ class llama_cpp_model_loader:
             }),
             },
             "optional": {
-                "speculative_mode": (["auto", "NGRAM", "DFlash", "DFlash2", "DSpark", "MTP", "Eagle3"], {
+                "speculative_mode": (["auto", "NGRAM", "DFlash", "DFlash2", "LiliCorr", "DSpark", "MTP", "Eagle3"], {
                     "default": "auto",
-                    "tooltip": "Speculative decoding mode. 'auto' selects DFlash/DFlash2/DSpark/MTP/Eagle3 if draft_model is provided, or NGRAM if enable_mtp is True."
+                    "tooltip": "Speculative decoding mode. 'auto' selects DFlash/DFlash2/LiliCorr/DSpark/MTP/Eagle3 if draft_model is provided, or NGRAM if enable_mtp is True."
                 }),
                 "draft_model": (draft_model_list, {
                     "default": "None",
-                    "tooltip": "Optional draft / sidecar model for DFlash / DSpark / MTP / Eagle3 speculative decoding (llama.cpp 0.3.49+ / 0.4.1+ / 0.4.3+).\nNote: In llama-cpp-python 0.4.3+, MTP supports multimodal image chat. Other draft sidecars (DFlash/DSpark/Eagle3) accelerate text generation and are automatically bypassed when processing multimodal inputs."
+                    "tooltip": "Optional draft / sidecar model for DFlash / DFlash2 / LiliCorr / DSpark / MTP / Eagle3 speculative decoding (llama.cpp 0.3.49+ / 0.4.1+ / 0.4.5+).\nNote: In llama-cpp-python 0.4.3+, MTP supports multimodal image chat. Other draft sidecars (DFlash/DFlash2/LiliCorr/DSpark/Eagle3) accelerate text generation and are automatically bypassed when processing multimodal inputs."
                 }),
             }
         }
@@ -1087,7 +1095,7 @@ class llama_cpp_instruct_adv:
         # Speculative Decoding: In llama-cpp-python 0.4.0+, N-gram speculation (NGRAM_MAP_K/K4V)
         # declares supports_predecoded_media=True and can safely accelerate multimodal generation.
         # In llama-cpp-python 0.4.3+, MTP (LlamaMTPDecoding) also supports MTMD image speculation (supports_predecoded_media=True).
-        # Draft sidecars without media support (DFlash / DSpark / Eagle) remain text-only (supports_predecoded_media=False)
+        # Draft sidecars without media support (DFlash / DFlash2 / LiliCorr / DSpark / Eagle) remain text-only (supports_predecoded_media=False)
         # and must be bypassed during multimodal evaluation to avoid KV cache invalidation.
         spec_engine = getattr(LLAMA_CPP_STORAGE.llm, "speculative", None)
         bypass_spec = has_media and spec_engine is not None and not getattr(spec_engine, "supports_predecoded_media", False)
@@ -1274,7 +1282,7 @@ class llama_cpp_instruct_adv:
                         if "llama_decode failed" in err_str.lower() or "invalid input batch" in err_str.lower() or "invalid negative token id" in err_str.lower():
                             raise RuntimeError(
                                 f"Llama Decode Error ({e}).\n\n"
-                                "If speculative decoding is enabled, note that text-only draft sidecars (DFlash / DSpark / Eagle3) cannot process multimodal inputs, whereas MTP and N-gram are supported in llama-cpp-python 0.4.3+."
+                                "If speculative decoding is enabled, note that text-only draft sidecars (DFlash / DFlash2 / LiliCorr / DSpark / Eagle3) cannot process multimodal inputs, whereas MTP and N-gram are supported in llama-cpp-python 0.4.3+."
                             ) from e
                         raise e
                     content = output['choices'][0]['message'].get('content', '') or ''
@@ -1305,7 +1313,7 @@ class llama_cpp_instruct_adv:
                     if "llama_decode failed" in err_str.lower() or "invalid input batch" in err_str.lower() or "invalid negative token id" in err_str.lower():
                         raise RuntimeError(
                             f"Llama Decode Error ({e}).\n\n"
-                            "If speculative decoding is enabled, note that text-only draft sidecars (DFlash / DSpark / Eagle3) cannot process multimodal inputs, whereas MTP and N-gram are supported in llama-cpp-python 0.4.3+."
+                            "If speculative decoding is enabled, note that text-only draft sidecars (DFlash / DFlash2 / LiliCorr / DSpark / Eagle3) cannot process multimodal inputs, whereas MTP and N-gram are supported in llama-cpp-python 0.4.3+."
                         ) from e
                     raise e
                 content = output['choices'][0]['message'].get('content', '') or ''

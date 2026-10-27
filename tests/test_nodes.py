@@ -266,6 +266,39 @@ class TestComfyUILlamaCppVLM(unittest.TestCase):
         self.assertEqual(spec.spec_type, SpeculativeType.DRAFT_DFLASH)
         self.assertTrue(hasattr(spec, "draft_model_path"))
 
+    def test_model_loader_lilicorr_speculative(self):
+        loader = nodes.llama_cpp_model_loader()
+        captured_kwargs = {}
+        def mock_init(self, model_path=None, chat_handler=None, n_gpu_layers=None, n_ctx=None, n_batch=None, n_ubatch=None, speculative=None, draft_model=None, **kwargs):
+            captured_kwargs.update(kwargs)
+            if speculative is not None:
+                captured_kwargs["speculative"] = speculative
+            if draft_model is not None:
+                captured_kwargs["draft_model"] = draft_model
+        orig_init = nodes.Llama.__init__
+        try:
+            nodes.Llama.__init__ = mock_init
+            loader.loadmodel(
+                model="target_model.gguf",
+                mmproj="None",
+                chat_handler="None",
+                n_ctx=4096,
+                vram_limit=-1,
+                image_min_tokens=0,
+                image_max_tokens=0,
+                speculative_mode="LiliCorr",
+                draft_model="nemotron_lilicorr.gguf"
+            )
+        finally:
+            nodes.Llama.__init__ = orig_init
+
+        from llama_cpp.llama_speculative import SpecConfig, SpeculativeType
+        self.assertIn("speculative", captured_kwargs)
+        spec = captured_kwargs["speculative"]
+        self.assertIsInstance(spec, SpecConfig)
+        self.assertEqual(spec.spec_type, SpeculativeType.DRAFT_DFLASH)
+        self.assertTrue(hasattr(spec, "draft_model_path"))
+
     def test_model_loader_mtp_speculative(self):
         loader = nodes.llama_cpp_model_loader()
         captured_kwargs = {}
@@ -348,7 +381,7 @@ class TestComfyUILlamaCppVLM(unittest.TestCase):
         req_path = os.path.join(REPO_ROOT, "requirements.txt")
         with open(req_path, "r", encoding="utf-8") as f:
             content = f.read()
-        self.assertIn("0.4.3", content)
+        self.assertIn("0.4.5", content)
         self.assertNotIn("0.4.1", content)
 
     def test_multimodal_bypasses_model_draft_speculative(self):
@@ -536,9 +569,10 @@ class TestComfyUILlamaCppVLM(unittest.TestCase):
         self.assertIn("MiniCPM-v4.6-Thinking", nodes.chat_handlers)
 
     def test_speculative_modes_supported(self):
-        """Verify DFlash2, MTP, and Eagle3 are available speculative_mode options."""
+        """Verify DFlash2, LiliCorr, MTP, and Eagle3 are available speculative_mode options."""
         spec_modes = nodes.llama_cpp_model_loader.INPUT_TYPES()["optional"]["speculative_mode"][0]
         self.assertIn("DFlash2", spec_modes)
+        self.assertIn("LiliCorr", spec_modes)
         self.assertIn("MTP", spec_modes)
         self.assertIn("Eagle3", spec_modes)
 
