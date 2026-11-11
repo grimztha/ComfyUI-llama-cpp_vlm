@@ -385,6 +385,11 @@ class LLAMA_CPP_STORAGE:
                 if ffmpeg_env and os.path.isdir(ffmpeg_env):
                     kwargs["video_ffmpeg_bin_dir"] = ffmpeg_env
 
+            if "video_no_soundtrack" in handler_params:
+                no_audio_env = os.environ.get("LLAMA_CPP_VIDEO_NO_SOUNDTRACK")
+                if no_audio_env is not None:
+                    kwargs["video_no_soundtrack"] = no_audio_env.strip().lower() in ("1", "true", "yes")
+
             try:
                 cls.chat_handler = handler(**kwargs)
             except Exception as e:
@@ -802,7 +807,7 @@ class llama_cpp_model_loader:
                 }),
                 "draft_model": (draft_model_list, {
                     "default": "None",
-                    "tooltip": "Optional draft / sidecar model for DFlash / DFlash2 / LiliCorr / DSpark / MTP / Eagle3 speculative decoding (llama.cpp 0.3.49+ / 0.4.1+ / 0.4.5+).\nNote: In llama-cpp-python 0.4.3+, MTP supports multimodal image chat. Other draft sidecars (DFlash/DFlash2/LiliCorr/DSpark/Eagle3) accelerate text generation and are automatically bypassed when processing multimodal inputs."
+                    "tooltip": "Optional draft / sidecar model for DFlash / DFlash2 / LiliCorr / DSpark / MTP / Eagle3 speculative decoding (llama.cpp 0.3.49+ / 0.4.1+ / 0.4.5+ / 0.4.6+).\nNote: In llama-cpp-python 0.4.3+, MTP supports multimodal image chat. In 0.4.6+, DFlash / DFlash2 / DSpark benefit from native device feature transfers. Other draft sidecars (DFlash/DFlash2/LiliCorr/DSpark/Eagle3) accelerate text generation and are automatically bypassed when processing multimodal inputs."
                 }),
             }
         }
