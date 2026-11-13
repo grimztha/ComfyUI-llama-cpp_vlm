@@ -381,7 +381,8 @@ class TestComfyUILlamaCppVLM(unittest.TestCase):
         req_path = os.path.join(REPO_ROOT, "requirements.txt")
         with open(req_path, "r", encoding="utf-8") as f:
             content = f.read()
-        self.assertIn("0.4.6", content)
+        self.assertIn("0.4.7", content)
+        self.assertNotIn("0.4.6", content)
         self.assertNotIn("0.4.1", content)
 
     def test_multimodal_bypasses_model_draft_speculative(self):

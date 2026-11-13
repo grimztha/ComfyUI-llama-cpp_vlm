@@ -807,7 +807,7 @@ class llama_cpp_model_loader:
                 }),
                 "draft_model": (draft_model_list, {
                     "default": "None",
-                    "tooltip": "Optional draft / sidecar model for DFlash / DFlash2 / LiliCorr / DSpark / MTP / Eagle3 speculative decoding (llama.cpp 0.3.49+ / 0.4.1+ / 0.4.5+ / 0.4.6+).\nNote: In llama-cpp-python 0.4.3+, MTP supports multimodal image chat. In 0.4.6+, DFlash / DFlash2 / DSpark benefit from native device feature transfers. Other draft sidecars (DFlash/DFlash2/LiliCorr/DSpark/Eagle3) accelerate text generation and are automatically bypassed when processing multimodal inputs."
+                    "tooltip": "Optional draft / sidecar model for DFlash / DFlash2 / LiliCorr / DSpark / MTP / Eagle3 speculative decoding (llama.cpp 0.3.49+ / 0.4.1+ / 0.4.5+ / 0.4.6+ / 0.4.7+).\nNote: In llama-cpp-python 0.4.3+, MTP supports multimodal image chat (0.4.7+ adds NextN device hidden-state transfer and Gemma4 assistant multimodal prefill). In 0.4.6+, DFlash / DFlash2 / DSpark benefit from native device feature transfers. Other draft sidecars (DFlash/DFlash2/LiliCorr/DSpark/Eagle3) accelerate text generation and are automatically bypassed when processing multimodal inputs."
                 }),
             }
         }
